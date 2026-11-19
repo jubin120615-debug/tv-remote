@@ -282,11 +282,33 @@ public class LgTv {
     public void channelDown() { request("ssap://tv/channelDown", new JSONObject()); }
     public void powerOff() { request("ssap://system/turnOff", new JSONObject()); }
 
-    public void launch(String appId) {
+    /** 앱 실행. 실패하면 다른 방식으로 한 번 더 시도하고, 그래도 안 되면 이유를 화면에 보여준다. */
+    public void launch(final String appId) {
         try {
-            request("ssap://system.launcher/launch", new JSONObject().put("id", appId));
+            final JSONObject p = new JSONObject().put("id", appId);
+            request("ssap://system.launcher/launch", p, msg -> {
+                if (!failed(msg)) return;
+                request("ssap://com.webos.applicationManager/launch", p, msg2 -> {
+                    if (failed(msg2)) {
+                        status("앱 실행 실패 (" + appId + "): " + errorText(msg2), true);
+                    }
+                });
+            });
         } catch (Exception ignored) {
         }
+    }
+
+    private static boolean failed(JSONObject msg) {
+        if ("error".equals(msg.optString("type"))) return true;
+        JSONObject p = msg.optJSONObject("payload");
+        return p != null && p.has("returnValue") && !p.optBoolean("returnValue", true);
+    }
+
+    private static String errorText(JSONObject msg) {
+        String e = msg.optString("error", "");
+        JSONObject p = msg.optJSONObject("payload");
+        if (e.isEmpty() && p != null) e = p.optString("errorText", "");
+        return e.isEmpty() ? "알 수 없는 오류" : e;
     }
 
     /**

@@ -297,6 +297,10 @@ public class MainActivity extends Activity implements LgTv.Listener {
 
     private void press(View v, boolean down) {
         v.setPressed(down);
+        bounce(v, down);
+    }
+
+    private void bounce(View v, boolean down) {
         if (down) {
             v.animate().scaleX(0.95f).scaleY(0.95f).setDuration(70).setInterpolator(null).start();
         } else {
@@ -324,9 +328,10 @@ public class MainActivity extends Activity implements LgTv.Listener {
         b.setBackground(states);
         b.setStateListAnimator(null);
         if (click != null) {
+            // 애니메이션만 하고 눌림 상태는 건드리지 않음 (그래야 안드로이드가 클릭으로 인식)
             b.setOnTouchListener((view, e) -> {
-                if (e.getAction() == MotionEvent.ACTION_DOWN) press(view, true);
-                else if (e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) press(view, false);
+                if (e.getAction() == MotionEvent.ACTION_DOWN) bounce(view, true);
+                else if (e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) bounce(view, false);
                 return false;
             });
             b.setOnClickListener(v -> {
